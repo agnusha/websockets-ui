@@ -12,8 +12,14 @@ export const createWebSocketServer = (port: number) => {
         });
 
         ws.on('message', function message(data) {
+            console.log("message"+data);
             const dataParsed = JSON.parse(data.toString());
-            handleMessage(dataParsed);
+
+            const response = handleMessage(dataParsed);
+            const responseText= JSON.stringify(response);
+
+            console.log("responseText"+responseText);
+            ws.send(responseText)
         });
 
         ws.on('error', console.error);

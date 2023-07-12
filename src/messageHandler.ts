@@ -8,13 +8,32 @@ let roomId: number = 1;
 let gameId: number = 1;
 
 export const handleMessage = (response: Response) => {
-    const data = response.data;
+    const { data, id } = { data: JSON.parse(response.data), id: response.id };
 
-    switch(data.type){
+    switch(response.type){
         case(Type.Registration) : 
-            const newUser: User = { name: data.name, password: data.password, id: response.id  }
-            users.push(newUser);
-            break;
+            const { name, password } = data;
+
+            let errorText = '';
+            if (!name || !password) {
+                errorText = 'Empty registration data';
+              } else if (users.some(u => u.name === name)) {
+                errorText = 'User name already exists';
+              } else {
+                const newUser: User = { name: name, password: password, id: response.id  }
+                users.push(newUser);
+              }
+
+            return {
+                type: Type.Registration,
+                data: {
+                  name,
+                  index: 0,
+                  error: !!errorText,
+                  errorText,
+                },
+                id,
+              }
 
         default:
             console.log('Unknown command:', data.type);
