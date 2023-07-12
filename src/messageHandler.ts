@@ -26,12 +26,12 @@ export const handleMessage = (response: Response) => {
 
             return {
                 type: Type.Registration,
-                data: {
+                data: JSON.stringify({
                   name,
                   index: 0,
                   error: !!errorText,
                   errorText,
-                },
+                }),
                 id,
               }
 

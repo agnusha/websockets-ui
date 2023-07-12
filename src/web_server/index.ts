@@ -7,8 +7,14 @@ export const createWebSocketServer = (port: number) => {
 
 
     webSocketServer.on('connection', function connection(ws) {
+        let responseText: string;
+        
         ws.on('open', () => {
             console.log(`Start web socket server on the ${port} port!`);
+        });
+        ws.on('error', console.error);
+        ws.on('close', () => {
+            console.log(`Close web socket server on the ${port} port!`);
         });
 
         ws.on('message', function message(data) {
@@ -16,16 +22,14 @@ export const createWebSocketServer = (port: number) => {
             const dataParsed = JSON.parse(data.toString());
 
             const response = handleMessage(dataParsed);
-            const responseText= JSON.stringify(response);
+            responseText= JSON.stringify(response);
 
-            console.log("responseText"+responseText);
-            ws.send(responseText)
+            console.log("responseText send"+responseText);
+            responseText && ws.send(responseText)          
+          
         });
 
-        ws.on('error', console.error);
-        
-        ws.on('close', () => {
-            console.log(`Close web socket server on the ${port} port!`);
-        });
+
+       
     });
 }
