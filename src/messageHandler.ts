@@ -7,37 +7,45 @@ const users: User[] = [];
 let roomId: number = 1;
 let gameId: number = 1;
 
-export const handleMessage = (response: Response) => {
-    const { data, id } = { data: JSON.parse(response.data), id: response.id };
+const mapToRespose = (data: any, type: Type): string => {
+  return JSON.stringify({
+    type,
+    data: JSON.stringify(data),
+    id: 0,
+  })
+}
 
-    switch(response.type){
-        case(Type.Registration) : 
-            const { name, password } = data;
+export const handleMessage = (response: Response): string => {
+  const { data, id } = { data: JSON.parse(response.data), id: response.id };
 
-            let errorText = '';
-            if (!name || !password) {
-                errorText = 'Empty registration data';
-              } else if (users.some(u => u.name === name)) {
-                errorText = 'User name already exists';
-              } else {
-                const newUser: User = { name: name, password: password, id: response.id  }
-                users.push(newUser);
-              }
+  switch (response.type) {
+    case (Type.Registration):
+      const { name, password } = data;
 
-            return {
-                type: Type.Registration,
-                data: JSON.stringify({
-                  name,
-                  index: 0,
-                  error: !!errorText,
-                  errorText,
-                }),
-                id,
-              }
+      let errorText = '';
+      if (!name || !password) {
+        errorText = 'Empty registration data';
+      } else if (users.some(u => u.name === name)) {
+        errorText = 'User name already exists';
+      } else {
+        const newUser: User = { name: name, password: password, id }
+        users.push(newUser);
+      }
 
-        default:
-            console.log('Unknown command:', data.type);
-            break;
-    }
+      return mapToRespose({
+        name,
+        index: 0,
+        error: !!errorText,
+        errorText,
+      }, response.type)
+
+
+    case (Type.CreateRoom):
+      mapToRespose({}, response.type)
+
+    default:
+      console.error('Unknown command:', data.type);
+      break;
+  }
 
 }
