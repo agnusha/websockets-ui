@@ -1,5 +1,5 @@
-export type Response = {
-    type: string,
-    data: any,
-    id: number,
+export interface Response {
+  type: string
+  data: any
+  id: number
 }
