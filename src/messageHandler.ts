@@ -1,4 +1,5 @@
 import { type Response } from './types/Response'
+import { type WebSocket } from 'ws'
 import { type User } from './types/User'
 import { Type } from './types/enums/Type'
 
@@ -15,7 +16,9 @@ const mapToRespose = (data: any, type: Type): string => {
   })
 }
 
-export const handleMessage = (response: Response): string => {
+export const handleMessage = (response: Response, ws: WebSocket): void => {
+  console.log(response)
+
   const { data, id } = { data: JSON.parse(response.data), id: response.id }
 
   switch (response.type) {
@@ -32,20 +35,21 @@ export const handleMessage = (response: Response): string => {
         users.push(newUser)
       }
 
-      return mapToRespose({
+      ws.send(mapToRespose({
         name,
         index: 0,
         error: !!errorText,
         errorText
-      }, response.type)
+      }, response.type))
+      break
     }
 
     case (Type.CreateRoom): {
-      return mapToRespose({}, response.type)
+      ws.send(mapToRespose({}, response.type))
+      break
     }
 
     default:
       console.error('Unknown command:', data.type)
-      return ''
   }
 }
