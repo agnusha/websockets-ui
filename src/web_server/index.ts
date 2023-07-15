@@ -17,10 +17,12 @@ export const createWebSocketServer = (port: number): void => {
     ws.on('message', function message (data) {
       console.log('message')
       console.log(data.toString())
-
-      const dataParsed = JSON.parse(data.toString())
-
-      handleMessage(dataParsed, ws)
+      try {
+        const dataParsed = JSON.parse(data.toString())
+        handleMessage(dataParsed, ws)
+      } catch (error) {
+        console.error(error)
+      }
 
       // console.log('responseText send' + response)
     })
