@@ -5,11 +5,15 @@ import { type WebSocket } from 'ws'
 import { type User } from './types/User'
 import { type Room } from './types/Room'
 import { type Game } from './types/Game'
+import { type Ship } from './types/Ship'
+import { type ShipGame } from './types/ShipGame'
 
 let currentUser: User
 const users: User[] = []
 const rooms: Room[] = []
 const games: Game[] = []
+const ships: Ship[] = []
+const shipGames: ShipGame[] = []
 
 let userId: number = 1
 let roomId: number = 1
@@ -85,7 +89,6 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
     case (Type.AddUserToRoom): {
       const { indexRoom } = data
       const currentUserId = 1
-      const currentUser = users.find(u => u.id === currentUserId)
 
       // Remove the room from the rooms list
       const roomIndex = rooms.findIndex((r) => r.roomId === indexRoom)
@@ -109,6 +112,37 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
       //   },
       //   id: 0,
 
+      break
+    }
+
+    //         type: "add_ships",
+    //           data:
+    //         {
+    //           gameId: <number>,
+    //             ships:
+    //           [
+    //             {
+    //               position: {
+    //                 x: <number>,
+    //                 y: <number>,
+    //               },
+    //               direction: <boolean>,
+    //               length: <number>,
+    //               type: "small" | "medium" | "large" | "huge",
+    //             }
+    //           ],
+    //             indexPlayer: <number>, /* id of the player in the current game */
+    //         },
+    //         id: 0,
+
+    case (Type.AddShips): {
+      // Start game (only after server receives both player's ships positions)
+      const { gameId, ships, indexPlayer } = data
+
+      const newShipGame: ShipGame = { ships, currentPlayerIndex: indexPlayer }
+      shipGames.push(newShipGame)
+
+      ws.send(mapToRespose({ ships, currentPlayerIndex: currentUser.id }, Type.StartGame))
       break
     }
 
