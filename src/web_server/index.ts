@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import { WebSocketServer } from 'ws'
-import { handleMessage } from '../messageHandler'
+import { handleMessage } from '../handler'
 
 export const createWebSocketServer = (port: number): void => {
   const webSocketServer = new WebSocketServer({ port })
@@ -23,8 +23,6 @@ export const createWebSocketServer = (port: number): void => {
       } catch (error) {
         console.error(error)
       }
-
-      // console.log('responseText send' + response)
     })
   })
 }

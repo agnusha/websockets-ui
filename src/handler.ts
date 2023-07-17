@@ -5,23 +5,14 @@ import { TypeRequest } from './types/enums/TypeRequest'
 import { type Response } from './types/Response'
 import { type WebSocket } from 'ws'
 import { type User } from './types/User'
-import { type Room } from './types/Room'
-import { type Game } from './types/Game'
 import { type ShipGame } from './types/ShipGame'
 import { type AttackStatus } from './types/enums/AttackStatus'
+
 import { getStatus } from './game'
 import { getAnotherUser, getUser, getUserId } from './user'
+import { addGame, addRoom, addUser, gameId, removeRoom, roomId, rooms, shipGames, userId, users } from './store'
 
 const userSockets: Record<number, WebSocket> = {}
-
-const users: User[] = []
-const rooms: Room[] = []
-const games: Game[] = []
-const shipGames: ShipGame[] = []
-
-let userId: number = 1
-let roomId: number = 1
-let gameId: number = 1
 
 export const handleMessage = (response: Response, ws: WebSocket): void => {
   const data = response.data ? JSON.parse(response.data) : undefined
@@ -41,9 +32,7 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
         }
       } else {
         const newUser: User = { id: userId, name, password }
-        users.push(newUser)
-        userId++
-
+        addUser(newUser)
         userSockets[newUser.id] = ws
       }
 
@@ -59,26 +48,14 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
     // create game room and add yourself there
     case (TypeRequest.CreateRoom): {
       const currentUser = getUser(getUserId(ws, users, userSockets), users)
+
       const newRoom = { roomId, roomUsers: [currentUser] }
-      roomId++
-      rooms.push(newRoom)
+      addRoom(newRoom)
+
       users.forEach(u => {
         userSockets[u.id].send(mapToRespose(rooms, TypeResponse.UpdateRoom))
         userSockets[u.id].send(mapToRespose(rooms, TypeResponse.UpdateRoom))
       })
-
-      //   [
-      //     {
-      //       roomId: <number>,
-      //       roomUsers:
-      //         [
-      //           {
-      //             name: <string>,
-      //             index: <number>,
-      //           }
-      //         ],
-      //     },
-      //   ],
 
       break
     }
@@ -89,15 +66,11 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
       const { indexRoom } = data
       const currentUser = getUser(getUserId(ws, users, userSockets), users)
 
-      // Remove the room from the rooms list
-      const roomIndex = rooms.findIndex((r) => r.roomId === indexRoom)
-      const currentRoom = rooms[roomIndex]
-      rooms.splice(roomIndex, 1)
-      currentRoom?.roomUsers.push(currentUser)
+      const currentRoom = removeRoom(indexRoom)
+      currentRoom.roomUsers.push(currentUser)
 
       const newGame = { gameId, gameUserIds: [currentUser.id], gameRooms: [currentRoom] }
-      games.push(newGame)
-      gameId++
+      addGame(newGame)
 
       users.forEach(u => {
         userSockets[u.id].send(mapToRespose({ idGame: gameId, idPlayer: u.id }, TypeResponse.CreateGame))
