@@ -102,11 +102,8 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
           currentPlayer: indexPlayer,
           status
         }, TypeResponse.Attack))
-      })
-
-      users.forEach(u => {
         userSockets[u.id].send(mapToRespose({
-          currentPlayer: indexPlayer
+          currentPlayer: getAnotherUser(indexPlayer, users).id
         }, TypeResponse.Turn))
       })
 
@@ -123,11 +120,8 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
           currentPlayer: indexPlayer,
           status
         }, TypeResponse.Attack))
-      })
-
-      users.forEach(u => {
         userSockets[u.id].send(mapToRespose({
-          currentPlayer: indexPlayer
+          currentPlayer: getAnotherUser(indexPlayer, users).id
         }, TypeResponse.Turn))
       })
       break

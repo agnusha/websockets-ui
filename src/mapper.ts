@@ -6,7 +6,5 @@ export const mapToRespose = (data: any, type: TypeResponse): string => {
     data: JSON.stringify(data),
     id: 0
   })
-  console.log('resul sent')
-  console.log(result)
   return result
 }
