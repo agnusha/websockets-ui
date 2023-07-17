@@ -24,8 +24,9 @@ function addRoom (item: Room): void {
 
 function removeRoom (indexRoom: number): Room {
   const roomIndex = rooms.findIndex((r) => r.roomId === indexRoom)
+  const removedItem = rooms[roomIndex]
   rooms.splice(roomIndex, 1)
-  return rooms[roomIndex]
+  return removedItem
 }
 
 function addGame (item: Game): void {
