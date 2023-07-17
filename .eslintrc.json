@@ -13,6 +13,6 @@
     },
     "rules": {
          "@typescript-eslint/no-unused-vars": "warn",
-         "@typescript-eslint/strict-boolean-expressions": "warn"
+         "@typescript-eslint/strict-boolean-expressions": "off"
     }
 }

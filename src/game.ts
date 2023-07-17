@@ -7,6 +7,7 @@ function getStatus (shipGames: ShipGame[], x: number, y: number, userId: number)
 
   for (const ship of opponentPlayerShips) {
     if (isShot(x, y, ship)) {
+      updateShipHit(ship)
       return isShipKilled(ship) ? 'killed' : 'shot'
     }
   }

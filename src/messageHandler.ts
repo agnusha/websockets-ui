@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+import { mapToRespose } from './mapper'
 import { TypeResponse } from './types/enums/TypeResponse'
 import { TypeRequest } from './types/enums/TypeRequest'
 
@@ -7,10 +7,10 @@ import { type WebSocket } from 'ws'
 import { type User } from './types/User'
 import { type Room } from './types/Room'
 import { type Game } from './types/Game'
-import { type Ship } from './types/Ship'
 import { type ShipGame } from './types/ShipGame'
 import { type AttackStatus } from './types/enums/AttackStatus'
 import { getStatus } from './game'
+import { getAnotherUser, getUser, getUserId } from './user'
 
 const userSockets: Record<number, WebSocket> = {}
 
@@ -22,33 +22,6 @@ const shipGames: ShipGame[] = []
 let userId: number = 1
 let roomId: number = 1
 let gameId: number = 1
-
-const mapToRespose = (data: any, type: TypeResponse): string => {
-  const result = JSON.stringify({
-    type,
-    data: JSON.stringify(data),
-    id: 0
-  })
-  console.log('resul sent')
-  console.log(result)
-  return result
-}
-
-function getUserId (ws: WebSocket): number {
-  const entry = Object.entries(userSockets).find(([_, value]) => value === ws)
-  if (entry) {
-    return Number(entry[0])
-  }
-  throw Error('User id hot match web socket')
-}
-
-function getUser (userId: number): User {
-  const user = users.find(u => u.id === userId)
-  if (user) {
-    return user
-  }
-  throw Error('User is not found by id')
-}
 
 export const handleMessage = (response: Response, ws: WebSocket): void => {
   const data = response.data ? JSON.parse(response.data) : undefined
@@ -85,7 +58,7 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
 
     // create game room and add yourself there
     case (TypeRequest.CreateRoom): {
-      const currentUser = getUser(getUserId(ws))
+      const currentUser = getUser(getUserId(ws, users, userSockets), users)
       const newRoom = { roomId, roomUsers: [currentUser] }
       roomId++
       rooms.push(newRoom)
@@ -114,7 +87,7 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
     // add youself to somebodys room, then remove room from rooms lis
     case (TypeRequest.AddUserToRoom): {
       const { indexRoom } = data
-      const currentUser = getUser(getUserId(ws))
+      const currentUser = getUser(getUserId(ws, users, userSockets), users)
 
       // Remove the room from the rooms list
       const roomIndex = rooms.findIndex((r) => r.roomId === indexRoom)
@@ -183,6 +156,9 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
           currentPlayer: indexPlayer,
           status
         }, TypeResponse.Attack))
+        userSockets[u.id].send(mapToRespose({
+          currentPlayer: getAnotherUser(indexPlayer, users)
+        }, TypeResponse.Turn))
       })
 
       // {
