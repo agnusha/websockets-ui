@@ -1,3 +1,4 @@
+import { type Position } from './types/Position'
 import { type Ship } from './types/Ship'
 import { type ShipGame } from './types/ShipGame'
 import { type AttackStatus } from './types/enums/AttackStatus'
@@ -35,6 +36,12 @@ function isShot (x: number, y: number, ship: Ship): boolean {
   }
 }
 
+function getRandomPosition (): Position {
+  return {
+    x: Math.floor(Math.random() * 10),
+    y: Math.floor(Math.random() * 10)
+  }
+}
 function updateShipHit (ship: Ship): void {
   ship.hits = ship.hits != null ? ship.hits + 1 : 0
 }
@@ -53,4 +60,4 @@ function isAllShipKilled (ships: Ship[]): boolean {
   return true
 }
 
-export { getStatus }
+export { getStatus, getRandomPosition }
