@@ -9,14 +9,14 @@ import { type Room } from './types/Room'
 import { type Game } from './types/Game'
 import { type Ship } from './types/Ship'
 import { type ShipGame } from './types/ShipGame'
+import { type AttackStatus } from './types/enums/AttackStatus'
+import { getStatus } from './game'
 
 const userSockets: Record<number, WebSocket> = {}
 
-let currentUser: User
 const users: User[] = []
 const rooms: Room[] = []
 const games: Game[] = []
-const ships: Ship[] = []
 const shipGames: ShipGame[] = []
 
 let userId: number = 1
@@ -34,10 +34,20 @@ const mapToRespose = (data: any, type: TypeResponse): string => {
   return result
 }
 
-const getAnotherUserId = (id: number): number => {
-  const anotherUser = users.find(u => u.id !== id)?.id
-  if (!anotherUser) throw new Error('unavbe to find second user')
-  return anotherUser
+function getUserId (ws: WebSocket): number {
+  const entry = Object.entries(userSockets).find(([_, value]) => value === ws)
+  if (entry) {
+    return Number(entry[0])
+  }
+  throw Error('User id hot match web socket')
+}
+
+function getUser (userId: number): User {
+  const user = users.find(u => u.id === userId)
+  if (user) {
+    return user
+  }
+  throw Error('User is not found by id')
 }
 
 export const handleMessage = (response: Response, ws: WebSocket): void => {
@@ -53,21 +63,18 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
       } else if (users.some(u => u.name === name)) {
         const userWithSameName = users.find(u => u.name === name) as User
 
-        if (userWithSameName.password === password) {
-          currentUser = userWithSameName
-        } else {
-          errorText = 'User name already exists'
+        if (userWithSameName.password !== password) {
+          errorText = 'User name already exists but password is incorrect'
         }
       } else {
         const newUser: User = { id: userId, name, password }
         users.push(newUser)
         userId++
 
-        currentUser = newUser
-        userSockets[currentUser.id] = ws
+        userSockets[newUser.id] = ws
       }
 
-      userSockets[currentUser.id].send(mapToRespose({
+      ws.send(mapToRespose({
         name,
         index: 0,
         error: !!errorText,
@@ -78,10 +85,14 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
 
     // create game room and add yourself there
     case (TypeRequest.CreateRoom): {
+      const currentUser = getUser(getUserId(ws))
       const newRoom = { roomId, roomUsers: [currentUser] }
       roomId++
       rooms.push(newRoom)
-      userSockets[currentUser.id].send(mapToRespose(rooms, TypeResponse.UpdateRoom))
+      users.forEach(u => {
+        userSockets[u.id].send(mapToRespose(rooms, TypeResponse.UpdateRoom))
+        userSockets[u.id].send(mapToRespose(rooms, TypeResponse.UpdateRoom))
+      })
 
       //   [
       //     {
@@ -103,6 +114,7 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
     // add youself to somebodys room, then remove room from rooms lis
     case (TypeRequest.AddUserToRoom): {
       const { indexRoom } = data
+      const currentUser = getUser(getUserId(ws))
 
       // Remove the room from the rooms list
       const roomIndex = rooms.findIndex((r) => r.roomId === indexRoom)
@@ -150,11 +162,42 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
 
       const newShipGame: ShipGame = { ships, currentPlayerIndex: indexPlayer }
       shipGames.push(newShipGame)
+      console.log('ship Games', shipGames)
 
       if (shipGames.length > 1) {
-        userSockets[indexPlayer].send(mapToRespose(newShipGame, TypeResponse.StartGame))
-        userSockets[getAnotherUserId(indexPlayer)].send(mapToRespose(newShipGame, TypeResponse.StartGame))
+        users.forEach(u => {
+          userSockets[u.id].send(mapToRespose(newShipGame, TypeResponse.StartGame))
+        })
       }
+      break
+    }
+
+    case (TypeRequest.Attack): {
+      // Start game (only after server receives both player's ships positions)
+      const { gameId, x, y, indexPlayer } = data
+      const status: AttackStatus = getStatus(shipGames, x, y, indexPlayer)
+
+      users.forEach(u => {
+        userSockets[u.id].send(mapToRespose({
+          position: { x, y },
+          currentPlayer: indexPlayer,
+          status
+        }, TypeResponse.Attack))
+      })
+
+      // {
+      //   type: "attack";,
+      //   data:
+      //   {
+      //     position:
+      //     {
+      //       x: <number>,
+      //         y: <number>,
+      //       },
+      //     currentPlayer: <number>, /* id of the player in the current game */
+      //       status: "miss" | "killed" | "shot",
+      //   },
+      //   id: 0,
       break
     }
 
