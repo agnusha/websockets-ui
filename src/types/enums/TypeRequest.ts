@@ -4,4 +4,5 @@ export enum TypeRequest {
   AddUserToRoom = 'add_user_to_room',
   AddShips = 'add_ships',
   Attack = 'attack',
+  RandomAttack = 'randomAttack',
 }

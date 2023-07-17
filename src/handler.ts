@@ -113,6 +113,7 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
       if (shipGames.length > 1) {
         users.forEach(u => {
           userSockets[u.id].send(mapToRespose(newShipGame, TypeResponse.StartGame))
+          userSockets[u.id].send(mapToRespose({ currentPlayer: indexPlayer }, TypeResponse.Turn))
         })
       }
       break
@@ -129,11 +130,38 @@ export const handleMessage = (response: Response, ws: WebSocket): void => {
           currentPlayer: indexPlayer,
           status
         }, TypeResponse.Attack))
+      })
+
+      users.forEach(u => {
         userSockets[u.id].send(mapToRespose({
-          currentPlayer: getAnotherUser(indexPlayer, users)
+          currentPlayer: indexPlayer
         }, TypeResponse.Turn))
       })
 
+      // {
+      //   type: "attack";,
+      //   data:
+      //   {
+      //     position:
+      //     {
+      //       x: <number>,
+      //         y: <number>,
+      //       },
+      //     currentPlayer: <number>, /* id of the player in the current game */
+      //       status: "miss" | "killed" | "shot",
+      //   },
+      //   id: 0,
+      break
+    }
+    case (TypeRequest.RandomAttack): {
+      // Start game (only after server receives both player's ships positions)
+      const { indexPlayer } = data
+
+      users.forEach(u => {
+        userSockets[u.id].send(mapToRespose({
+          currentPlayer: indexPlayer
+        }, TypeResponse.Turn))
+      })
       // {
       //   type: "attack";,
       //   data:
